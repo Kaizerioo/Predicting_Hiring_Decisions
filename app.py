@@ -1,6 +1,8 @@
 import streamlit as st
 import joblib
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
 model = joblib.load('forest_model.joblib','r')
 st.title('Machine Learning Project')
 
@@ -42,11 +44,12 @@ if ok:
         recruitment_strategy = 3
     
     x = np.array([[education_level,experience_years,previous_company,interviewer_score,skill_score,personality_score,recruitment_strategy]])
-    x = x/255
+    scaler = MinMaxScaler()
+    x = scaler.fit_transform(x)
     predict = model.predict(x)
     if predict == 1:
         st.header("You are Hired !")
     else:
         st.header("You are not Hired !")
     
-    st.markdown("Prediction with 96% Accuracy model")
+    st.markdown("Prediction with 95% Accuracy model")
