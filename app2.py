@@ -1,10 +1,13 @@
 import streamlit as st
 import joblib
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 #import model
 model = joblib.load('forest_model.joblib','r')
-
+df = pd.read_csv("dataset/recruitment_data.csv")
 #title
 st.title("💼 Hiring Decision Prediction")
 st.divider()
@@ -16,6 +19,12 @@ education_level = ("Bachelor's (Type 1)", "Bachelor's (Type 2)","Master's","Ph.D
 recruitment_strategy = ("aggresive","moderate","conservative") 
 #1 aggresive, 2 moderate, 3 conservative
 
+EducationLevel_mapping = {1: "Bachelor's (Type 1)", 2: "Bachelor's (Type 2)", 3: "Master's", 4: "Ph.D"}
+df["EducationLevel"] = df["EducationLevel"].replace(EducationLevel_mapping)
+RecruitmentStrategy_mapping = {1: "aggresive",2: "moderate", 3: "conservative"}
+df["RecruitmentStrategy"] = df["RecruitmentStrategy"].replace(RecruitmentStrategy_mapping)
+HiringDecision_mapping = {0: "Not Hired", 1: "Hired"}
+df["HiringDecision"] = df["HiringDecision"].replace(HiringDecision_mapping)
 
 def calculate(edu_level, exp_years, prev_company, interview, skill, personality,strategy):
     encoded_edu_level, encoded_strategy = encode(edu_level, strategy)
@@ -59,6 +68,21 @@ def show_data(name, age, gender, edu_level, exp_years, prev_company, dist, inter
     st.write("Personality Score :", personality)
     st.write("Strategy :", strategy)
 
+def barplot(col_name):
+    fig, ax = plt.subplots()
+    sns.countplot(data=df, x='HiringDecision', hue=col_name, ax=ax, palette="Blues")
+    ax.set_title(f"Hiring Decision based on {col_name}")
+
+    # Display the barplot in Streamlit
+    st.title(f"{col_name} Barplot")
+    st.pyplot(fig)
+
+def histplot(col_name):
+    fig, ax = plt.subplots()
+    sns.histplot(data=df, x=df[col_name],hue=df["HiringDecision"],palette="Set3")
+    ax.set_title(f"Hiring Decision based on {col_name}")
+    st.title(f"{col_name} Histogram")
+    st.pyplot(fig)
 #form
 with st.form("Input Form"):
     st.markdown("input form")
@@ -89,3 +113,23 @@ if submit_button:
     calculate(education_level, experience_years, previous_company, interviewer_score, skill_score, personality_score, recruitment_strategy)
     st.divider()
 
+    #creating tabs
+    
+    tabs_edu, tabs_exp, tabs_prev, tabs_dist, tabs_interscore, tabs_skillscore, tabs_personalscore, tabs_strats = st.tabs(["Education Level", "Experience Year", "Previous Company", "Distance from Company", "Interviewer Score", "Skill Score", "Personality Score", "Recruitment Strategy"])
+    with tabs_edu:
+        barplot("EducationLevel")
+    
+    with tabs_exp:
+        histplot("ExperienceYears")
+    with tabs_prev:
+        histplot("PreviousCompanies")
+    with tabs_dist:
+        histplot("DistanceFromCompany")
+    with tabs_interscore:
+        histplot("InterviewScore")
+    with tabs_skillscore:
+        histplot("SkillScore")
+    with tabs_personalscore:
+        histplot("PersonalityScore")
+    with tabs_strats:
+        barplot("RecruitmentStrategy")
