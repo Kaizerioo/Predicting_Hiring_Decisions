@@ -15,9 +15,6 @@ x = df.drop("HiringDecision",axis = 1)
 y = df["HiringDecision"]
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=10, train_size= .75)
-scaler = MinMaxScaler()
-x_train = scaler.fit_transform(x_train)
-x_test = scaler.fit_transform(x_test)
 
 forest = RandomForestClassifier()
 forest.fit(x_train, y_train)
@@ -27,7 +24,7 @@ print(f'Accuracy: {accuracy_score(y_test, prediction)}')
 print(confusion_matrix(y_test, prediction))
 print(classification_report(y_test, prediction))
 
-#joblib.dump(forest, 'forest_model.joblib')
+joblib.dump(forest, 'forest_model.joblib')
 
 
 

@@ -1,55 +1,68 @@
 import streamlit as st
 import joblib
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 
-model = joblib.load('forest_model.joblib','r')
-st.title('Machine Learning Project')
+# Load model
+model = joblib.load('forest_model.joblib')
 
-st.write("""Recruitment data""")
-gender = (
-    "Female",
-    "Male"
-)
+# Define options for select boxes and radio buttons
+gender_options = ("Female", "Male")
+education_level_options = ("Bachelor's (Type 1)", "Bachelor's (Type 2)", "Master's", "Ph.D")
+recruitment_strategy_options = ("aggressive", "moderate", "conservative")
 
-education_level = ("Bachelor's (Type 1)", "Bachelor's (Type 2)","Master's","Ph.D") #1 bachelor type 1, 2 bachelor type 2, 3 master, 4 Ph.D
-recruitment_strategy = ("aggresive","moderate","conservative") #1 aggresive, 2 moderate, 3 conservative
-
-age = st.number_input("Age :", min_value=0, max_value=200, value=0, step=1)
-gender = st.selectbox("Gender :",gender)
-education_level = st.selectbox("education level :",education_level)
-experience_years = st.number_input("Experience Years :", min_value=0, max_value=20, value=0, step=1)
-previous_company = st.number_input("Previous Company :", min_value=0, max_value=20, value=0, step=1)
-distance_from_company = st.number_input("Distance from Company (km)")
-interviewer_score = st.slider("Interviewer Score :", 0,100)
-skill_score = st.slider("Skill Score :",0,100)
-personality_score = st.slider("Personality Score :",0,100)
-recruitment_strategy = st.selectbox("Recruitment Strategy :",recruitment_strategy)
-ok = st.button("Calculate")
-if ok:
-    if education_level == "Bachelor's (Type 1)":
-        education_level = 1
-    elif education_level == "Bachelor's (Type 2)":
-        education_level = 2
-    elif education_level == "Master's":
-        education_level = 3
-    else:
-        education_level = 4
-    
-    if recruitment_strategy == "aggresive":
-        recruitment_strategy = 1
-    elif recruitment_strategy == "moderate":
-        recruitment_strategy = 2
-    else:
-        recruitment_strategy = 3
-    
-    x = np.array([[education_level,experience_years,previous_company,interviewer_score,skill_score,personality_score,recruitment_strategy]])
-    scaler = MinMaxScaler()
-    x = scaler.fit_transform(x)
+# Function to calculate hiring decision
+def calculate(edu_level, exp_years, prev_company, interview, skill, personality, strategy):
+    encoded_edu_level, encoded_strategy = encode(edu_level, strategy)
+    x = np.array([[encoded_edu_level, exp_years, prev_company, interview, skill, personality, encoded_strategy]])
     predict = model.predict(x)
     if predict == 1:
-        st.header("You are Hired !")
+        return "You are Hired !"
     else:
-        st.header("You are not Hired !")
-    
-    st.markdown("Prediction with 95% Accuracy model")
+        return "You are not Hired !"
+
+# Function to encode education level and recruitment strategy
+def encode(education_level, recruitment_strategy):
+    education_level_encoded = education_level_options.index(education_level) + 1
+    recruitment_strategy_encoded = recruitment_strategy_options.index(recruitment_strategy) + 1
+    return education_level_encoded, recruitment_strategy_encoded
+
+# Function to display user input data
+def show_data(name, age, gender, edu_level, exp_years, prev_company, dist, interview, skill, personality, strategy):
+    st.write("**Personal Information**")
+    st.write(f"Full Name: {name}")
+    st.write(f"Age: {age}")
+    st.write(f"Gender: {gender}")
+    st.write(f"Education Level: {edu_level}")
+    st.write(f"Recruitment Strategy: {strategy}")
+    st.write(f"Experience Years: {exp_years}")
+    st.write(f"Previous Company: {prev_company}")
+    st.write(f"Distance from Company: {dist} km")
+    st.write("**Scores**")
+    st.write(f"Interview Score: {interview}")
+    st.write(f"Skill Level: {skill}")
+    st.write(f"Personality Score: {personality}")
+
+# Streamlit app
+st.title("💼 Hiring Decision Prediction")
+
+# Sidebar styling and layout
+st.sidebar.header("Input Form")
+name = st.sidebar.text_input("Full Name")
+age = st.sidebar.number_input("Age", min_value=0, max_value=200, value=0, step=1)
+gender = st.sidebar.radio("Gender", gender_options)
+edu_level = st.sidebar.selectbox("Education Level", education_level_options)
+exp_years = st.sidebar.number_input("Experience Years", min_value=0, max_value=20, value=0, step=1)
+prev_company = st.sidebar.number_input("Previous Company", min_value=0, max_value=20, value=0, step=1)
+dist = st.sidebar.number_input("Distance from Company (km)")
+interview = st.sidebar.slider("Interview Score", 0, 100)
+skill = st.sidebar.slider("Skill Score", 0, 100)
+personality = st.sidebar.slider("Personality Score", 0, 100)
+strategy = st.sidebar.radio("Recruitment Strategy", recruitment_strategy_options)
+submit_button = st.sidebar.button("Calculate")
+
+# Display results upon submission
+if submit_button:
+    st.header("Result")
+    show_data(name, age, gender, edu_level, exp_years, prev_company, dist, interview, skill, personality, strategy)
+    result = calculate(edu_level, exp_years, prev_company, interview, skill, personality, strategy)
+    st.success(result)
